@@ -7,4 +7,5 @@ jupyter nbextension enable hide_code/hide_code
 jupyter nbextension enable init_cell/main
 jupyter nbextension enable jupyter-matplotlib/extension
 jupyter nbextension enable rise/main
-jupyter trust taylor_apporx.ipynb
+jupyter trust taylor_approx.ipynb
+
