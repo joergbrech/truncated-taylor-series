@@ -10,7 +10,8 @@ This is a jupyter notebook with a simple widget demonstrating the truncated Tayl
 To run locally, it is recommended to install all requirements in a conda environment. Install an Anaconda distribution, e.g. [Miniforge](https://github.com/conda-forge/miniforge) and open an Anaconda terminal. 
 
 ```
-conda env create -f environment.yml
+conda env create -f .binder/environment.yml
+conda activate rise-matplotlib
 ```
 
 Next, copy the commands from `.binder/postBuild` into the same terminal to setup all necessary jupyter notebook extensions. If you are running a bash-like terminal, you can simply run 
