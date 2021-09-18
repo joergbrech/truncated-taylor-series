@@ -1,7 +1,7 @@
 jupyter contrib nbextension install --user
-jupyter nbextension install --py hide_code
-jupyter nbextension enable --py hide_code
-jupyter serverextension enable --py hide_code
+jupyter nbextension install hide_code --py --sys-prefix
+jupyter nbextension enable hide_code --py --sys-prefix
+jupyter serverextension enable hide_code --py --sys-prefix
 jupyter nbextension enable splitcell/splitcell 
 jupyter nbextension enable hide_code/hide_code
 jupyter nbextension enable init_cell/main
