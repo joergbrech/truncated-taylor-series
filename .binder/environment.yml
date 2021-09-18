@@ -1,0 +1,12 @@
+name: rise-matplotlib
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - matplotlib
+  - jupyter
+  - rise
+  - pip:
+    - jupyter-contrib-nbextensions
+

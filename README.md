@@ -1,0 +1,1 @@
+# Trancated Taylor series Approximation
