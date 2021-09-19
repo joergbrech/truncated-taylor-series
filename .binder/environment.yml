@@ -8,6 +8,7 @@ dependencies:
   - matplotlib
   - jupyter
   - rise
+  - voila
   - pip:
     - jupyter-contrib-nbextensions
     - hide_code
