@@ -7,20 +7,15 @@ This is a simple web app demonstrating the truncated Taylor series approximation
 
 ![](screenshot.PNG)
 
-To run locally, it is recommended to install all requirements in a conda environment. To do so, install an Anaconda distribution if you haven't already, e.g. [Miniforge](https://github.com/conda-forge/miniforge), and open a conda terminal. Enter the following commands to create the environment, install all requirements and activate the environment:
+To run locally, enter the following commands into a terminal to install all requirements first:
 
 ```
-conda env create -f .binder/environment.yml
-conda activate rise-matplotlib
+git clone https://github.com/joergbrech/truncated-taylor-series.git
+cd truncated-taylor-series
+pip install -r requirements.txt
 ```
 
-Next, copy the commands from `.binder/postBuild` into the same terminal to setup all necessary jupyter notebook extensions. If you are running a bash-like terminal, you can simply run the following command to do this.
-
-```
-source .binder/postBuild
-```
-
-Finally, start the app with
+Start the app with
 
 ```
 voila taylor_approx.ipynb
