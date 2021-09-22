@@ -208,7 +208,7 @@ def update_coefficients(function_string, degree_max):
     coeffs = [0 for k in range(0, degree_max + 1)]
     coeffs[0] = parse_expr(function_string)
     fac = 1
-    for k in range(1, st.session_state.degree_max + 1):
+    for k in range(1, degree_max + 1):
         coeffs[k] = diff(coeffs[k - 1] * fac, x) / (fac * k)
         fac = fac * k
 
