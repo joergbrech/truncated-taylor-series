@@ -196,8 +196,8 @@ def update_plot(visible,
     # make all changes visible
     st.session_state.fig.canvas.draw()
 
-@st.cache(suppress_st_warning=False)
-def update_coefficients(function_string):
+@st.cache(suppress_st_warning=True)
+def update_coefficients(function_string, degree_max):
     """
     stores symbolic representations of the coefficients k! * df/dk(x0) of the Taylor polynomial in an array from the
     outer scope.
@@ -205,14 +205,13 @@ def update_coefficients(function_string):
     This is used to cache the derivative calculation for better performance, when evaluating the Taylor polynomial
     """
 
-    coeffs = [0 for k in range(0, st.session_state.degree_max + 1)]
+    coeffs = [0 for k in range(0, degree_max + 1)]
     coeffs[0] = parse_expr(function_string)
     fac = 1
     for k in range(1, st.session_state.degree_max + 1):
         coeffs[k] = diff(coeffs[k - 1] * fac, x) / (fac * k)
         fac = fac * k
 
-    st.session_state.coefficients = coeffs
     return coeffs
 
 
@@ -229,9 +228,6 @@ if __name__ == '__main__':
 
     if 'handles' not in st.session_state:
         st.session_state.handles = {}
-
-    if 'degree_max' not in st.session_state:
-        st.session_state.degree_max = 10
 
     st.sidebar.title("Advanced settings")
 
@@ -251,7 +247,8 @@ if __name__ == '__main__':
 
     res = st.sidebar.number_input(label='resolution', value=50)
 
-    update_coefficients(func_str)
+    degree_max = 10
+    coefficients = update_coefficients(func_str, degree_max)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -266,7 +263,7 @@ if __name__ == '__main__':
         degree = st.slider(
             'degree',
             min_value=0,
-            max_value=st.session_state.degree_max,
+            max_value=degree_max,
             value=int(0)
         )
 
