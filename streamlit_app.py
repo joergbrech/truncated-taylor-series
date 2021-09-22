@@ -68,7 +68,8 @@ def update_hlines(*, h, y, xmin=None, xmax=None):
 
 #To Do: Why does caching update_plot hang?
 #@st.cache(suppress_st_warning=True)
-def update_plot(visible,
+def update_plot(coefficients,
+                visible,
                 x0,
                 degree,
                 xmin,
@@ -86,7 +87,6 @@ def update_plot(visible,
     Note: The input "function" is actually not needed, because coefficients[0] already contains the parsed function expression.
     """
 
-    coefficients = st.session_state.coefficients
     handles = st.session_state.handles
 
     # parse symbolic representation of function
@@ -267,6 +267,6 @@ if __name__ == '__main__':
             value=int(0)
         )
 
-    update_plot(visible, x0, degree, xmin, xmax, ymin, ymax, res)
+    update_plot(coefficients, visible, x0, degree, xmin, xmax, ymin, ymax, res)
 
     st.pyplot(st.session_state.fig)
