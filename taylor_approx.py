@@ -196,7 +196,7 @@ def update_plot(visible,
     # make all changes visible
     st.session_state.fig.canvas.draw()
 
-@st.cache(suppress_st_warning=True)
+@st.cache(suppress_st_warning=False)
 def update_coefficients(function_string):
     """
     stores symbolic representations of the coefficients k! * df/dk(x0) of the Taylor polynomial in an array from the
@@ -218,13 +218,13 @@ def update_coefficients(function_string):
 
 if __name__ == '__main__':
 
-    st.set_page_config(layout="wide")
+    st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
     st.title('Truncated Taylor series')
 
     if 'fig' not in st.session_state:
         # initialize the figure and initialize an empty dict of plot handles
         plt.xkcd()  # <-- beautiful xkcd style
-        st.session_state.fig = plt.figure(figsize=(8, 4))
+        st.session_state.fig = plt.figure(figsize=(8, 3))
         st.session_state.fig.add_axes([0., 0., 1., 1.])
 
     if 'handles' not in st.session_state:
@@ -233,42 +233,43 @@ if __name__ == '__main__':
     if 'degree_max' not in st.session_state:
         st.session_state.degree_max = 10
 
-    with st.sidebar.expander(label='Visualization options', expanded=False):
-        # To Do: When this expander is collapsed and re-expanded, the values are reset to the initial default.
-        xmin = st.number_input(label='xmin', value=1.)
-        xmax = st.number_input(label='xmax', value=4.)
-        ymin = st.number_input(label='ymin', value=-50.)
-        ymax = st.number_input(label='ymax', value=50.)
-        res = st.number_input(label='resolution', value=50)
+    st.sidebar.title("Advanced settings")
 
     func_str = st.sidebar.text_input(label="function",
                                      value='25 + exp(x)*sin(x**2) - 10*x')
 
-    update_coefficients(func_str)
-
-    if 'coefficients' not in st.session_state:
-        # cache coefficents of the Taylor polynomial in an array, and add an observer for the function expression text box.
-        # Whenever the input in the text box changes, the symbolic representations of the coefficients of the Taylor polynomial are
-        # updated. This way they don't have to be recomputed each time the x0 and degree sliders are used, which will result in a
-        # better overall performance
-        update_coefficients(func_str)
-
     visible = st.sidebar.checkbox(label='Show Taylor Polynomial', value=True)
 
-    x0 = st.sidebar.slider(
-        'x0',
-        min_value=xmin,
-        max_value=xmax,
-        value=2.3
-    )
+    st.sidebar.markdown("Visualization Options")
+    xcol1, xcol2 = st.sidebar.columns(2)
+    with xcol1:
+        xmin = st.number_input(label='xmin', value=1.)
+        ymin = st.number_input(label='ymin', value=-50.)
+    with xcol2:
+        xmax = st.number_input(label='xmax', value=4.)
+        ymax = st.number_input(label='ymax', value=50.)
 
-    degree = st.sidebar.slider(
-        'degree',
-        min_value=0,
-        max_value=st.session_state.degree_max,
-        value=int(0)
-    )
+    res = st.sidebar.number_input(label='resolution', value=50)
+
+    update_coefficients(func_str)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        x0 = st.slider(
+            'x0',
+            min_value=xmin,
+            max_value=xmax,
+            value=2.3
+        )
+
+    with col2:
+        degree = st.slider(
+            'degree',
+            min_value=0,
+            max_value=st.session_state.degree_max,
+            value=int(0)
+        )
 
     update_plot(visible, x0, degree, xmin, xmax, ymin, ymax, res)
 
-    st.pyplot(fig=st.session_state.fig)
+    st.pyplot(st.session_state.fig)
