@@ -1,0 +1,14 @@
+name: voila-matplotlib
+channels:
+ - conda-forge
+dependencies:
+ - python
+ - numpy
+ - sympy
+ - matplotlib
+ - jupyter
+ - voila
+ - pip:
+    - jupyter-contrib-nbextensions
+    - ipympl
+
