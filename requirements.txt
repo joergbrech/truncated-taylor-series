@@ -1,4 +1,7 @@
+streamlit
 numpy
 sympy
 matplotlib
-streamlit
+pandas
+altair
+

@@ -1,21 +1,24 @@
 import streamlit as st
 
-import matplotlib.pyplot as plt
-import numpy as np
-
 from sympy import *
 from sympy.parsing.sympy_parser import parse_expr
 from sympy.abc import x
+
+import numpy as np
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import altair as alt
 
 
 # Define some helpful functions
 
 def evaluate_shifted_polynomial(coeffs, x0, degree, xs):
     """
-    Given an array coeffs of symbolic expressions in x, where len(coeffs) >= degree, evaluate the shifted
+    Given an array coeffs of symbolic expressions in sympy.abc.x, where len(coeffs) >= degree, evaluate the shifted
     polynomial
 
-      f(x) = sum( coeffs[k](x)*(x-x0)**k)
+      f(x) = sum( coeffs[k](x0)*(x-x0)**k)
 
     where the sum goes over k from 0 to degree. This is used to evaluate the Taylor polynomial, where the coefficients
     coeffs[k] = df^k/dx^k(x0)/k! are precomputed.
@@ -66,28 +69,20 @@ def update_hlines(*, h, y, xmin=None, xmax=None):
 # Define the function that updates the plot #
 #############################################
 
-#To Do: Why does caching update_plot hang?
-#@st.cache(suppress_st_warning=True)
-def update_plot(coefficients,
-                visible,
-                x0,
-                degree,
-                xmin,
-                xmax,
-                ymin,
-                ymax,
-                xresolution):
+@st.cache(suppress_st_warning=True)
+def update_data(coefficients, degree, x0, xmin, xmax, xresolution):
     """
-    Updates the plot. visible, function, x0, degree, xmin, xmax, ymin, ymax are all controlled by widgets. xresolution, coeffients
-    and handles are fixed.
+    Calculates the np-arrays needed to plot the function and Taylor polyonmial
 
-    coefficients is the array containing the precomputed Taylor polynomial coefficients (in symbolic representation)
-    handles is a dictionary of the plots that are to be updated.
+    :param coefficients: symbolic representation of the coefficients of the Taylor polynomial
+    :param degree: degree of the Taylor polynomial
+    :param x0: The evaluation point of the Taylor polynomial
+    :param xmin: minimum value of the x range
+    :param xmax: maximum value of the x range
+    :param xresolution: resolution of the plot
 
-    Note: The input "function" is actually not needed, because coefficients[0] already contains the parsed function expression.
+    :return: np-arrays with x-coordinates, y-coordinates of function f, y-coordinates of Taylor Polynomial
     """
-
-    handles = st.session_state.handles
 
     # parse symbolic representation of function
     f = coefficients[0]
@@ -97,8 +92,35 @@ def update_plot(coefficients,
 
     # update the x values for plotting
     xs = np.linspace(xmin, xmax, int(xresolution))
+    fys = lambdify(x, f, 'numpy')(xs)
+    tys = evaluate_shifted_polynomial(coefficients, x0, degree, xs)
+    return xs, fys, tys, fx0
 
-    ax = st.session_state.fig.axes[0]
+
+# To Do: Why does caching update_plot hang?
+# @st.cache(suppress_st_warning=True)
+def update_plot(x0, fx0, xs, ys, ps, visible, xmin, xmax, ymin, ymax):
+    """
+    Creates a Matplotlib plot if the dictionary st.session_state.handles is empty, otherwise
+    updates a Matplotlib plot by modifying the plot handles stored in st.session_state.handles.
+    The figure is stored in st.session_state.fig.
+
+    :param x0: Evaluation point of the function/Taylor polynomial
+    :param fx0: Function evaluated at x0
+    :param xs: numpy-array of x-coordinates
+    :param ys: numpy-array of f(x)-coordinates
+    :param ps: numpy-array of P(x)-coordinates, where P is the Taylor polynomial
+    :param visible: A flag wether the Taylor polynomial is visible or not
+    :param xmin: minimum x-range value
+    :param xmax: maximum x-range value
+    :param ymin: minimum y-range value
+    :param ymax: maximum y-range value
+    :return: none.
+    """
+
+    handles = st.session_state.handles
+
+    ax = st.session_state.mpl_fig.axes[0]
 
     # if the dictionary of plot handles is empty, the plot does not exist yet. We create it. Otherwise the plot exists,
     # and we can update the plot handles in fs, without having to redraw everything (better performance).
@@ -108,10 +130,10 @@ def update_plot(coefficients,
         #######################
 
         # plot f and append the plot handle
-        handles["func"] = ax.plot(xs, lambdify(x, f, 'numpy')(xs), label="function f")[0]
+        handles["func"] = ax.plot(xs, ys, label="function f")[0]
 
         # plot the Taylor polynomial
-        handles["taylor"] = ax.plot(xs, evaluate_shifted_polynomial(coefficients, x0, degree, xs),
+        handles["taylor"] = ax.plot(xs, ps,
                                    color='g',
                                    label='Taylor polynomial at x0'.format(degree))[0]
 
@@ -154,11 +176,11 @@ def update_plot(coefficients,
 
         # Update the function plot
         handles["func"].set_xdata(xs)
-        handles["func"].set_ydata(lambdify(x, f, 'numpy')(xs))
+        handles["func"].set_ydata(ys)
 
         # update the taylor polynomial plot
         handles["taylor"].set_xdata(xs)
-        handles["taylor"].set_ydata(evaluate_shifted_polynomial(coefficients, x0, degree, xs))
+        handles["taylor"].set_ydata(ps)
 
         # update the visibility of the Taylor expansion
         handles["taylor"].set_visible(visible)
@@ -194,7 +216,7 @@ def update_plot(coefficients,
     ax.set_ylim([ymin, ymax])
 
     # make all changes visible
-    st.session_state.fig.canvas.draw()
+    st.session_state.mpl_fig.canvas.draw()
 
 @st.cache(suppress_st_warning=True)
 def update_coefficients(function_string, degree_max):
@@ -217,17 +239,11 @@ def update_coefficients(function_string, degree_max):
 
 if __name__ == '__main__':
 
+    # maximum allowed degree of a Taylor Polynomial
+    degree_max = 10
+
     st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
     st.title('Truncated Taylor series')
-
-    if 'fig' not in st.session_state:
-        # initialize the figure and initialize an empty dict of plot handles
-        plt.xkcd()  # <-- beautiful xkcd style
-        st.session_state.fig = plt.figure(figsize=(8, 3))
-        st.session_state.fig.add_axes([0., 0., 1., 1.])
-
-    if 'handles' not in st.session_state:
-        st.session_state.handles = {}
 
     st.sidebar.title("Advanced settings")
 
@@ -237,6 +253,9 @@ if __name__ == '__main__':
     visible = st.sidebar.checkbox(label='Show Taylor Polynomial', value=True)
 
     st.sidebar.markdown("Visualization Options")
+
+    style = st.sidebar.selectbox(label="Style", options=('Matplotlib', 'Altair'), index=0)
+
     xcol1, xcol2 = st.sidebar.columns(2)
     with xcol1:
         xmin = st.number_input(label='xmin', value=1.)
@@ -246,9 +265,6 @@ if __name__ == '__main__':
         ymax = st.number_input(label='ymax', value=50.)
 
     res = st.sidebar.number_input(label='resolution', value=50)
-
-    degree_max = 10
-    coefficients = update_coefficients(func_str, degree_max)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -267,6 +283,47 @@ if __name__ == '__main__':
             value=int(0)
         )
 
-    update_plot(coefficients, visible, x0, degree, xmin, xmax, ymin, ymax, res)
+    # update the data
+    coefficients = update_coefficients(func_str, degree_max)
+    xs, ys, ps, fx0 = update_data(coefficients, degree, x0, xmin, xmax, res)
 
-    st.pyplot(st.session_state.fig)
+    if 'Matplotlib' in style:
+
+        # initialize the Matplotlib figure and initialize an empty dict of plot handles
+        if 'mpl_fig' not in st.session_state:
+            plt.xkcd()  # <-- beautiful xkcd style
+            st.session_state.mpl_fig = plt.figure(figsize=(8, 3))
+            st.session_state.mpl_fig.add_axes([0., 0., 1., 1.])
+
+        if 'handles' not in st.session_state:
+            st.session_state.handles = {}
+
+    if 'Altair' in style and 'chart' not in st.session_state:
+        # initialize empty chart
+        st.session_state.chart = st.empty()
+
+    # update plot
+    if 'Matplotlib' in style:
+        update_plot(x0, fx0, xs, ys, ps, visible, xmin, xmax, ymin, ymax)
+        st.pyplot(st.session_state.mpl_fig)
+    else:
+        df = pd.DataFrame(data=np.array([xs, ys, ps], dtype=np.number).transpose(),
+                          columns=["x", "function", "Taylor polynomial at x0"])
+        chart = alt.Chart(df) \
+            .transform_fold(["function", "Taylor polynomial at x0"], as_=["legend", "y"]) \
+            .mark_line(clip=True) \
+            .encode(
+                x=alt.X('x:Q', scale=alt.Scale(domain=(xmin, xmax))),
+                y=alt.Y('y:Q', scale=alt.Scale(domain=(ymin, ymax))),
+                color=alt.Color('legend:N', scale=alt.Scale(range=["green", "blue"]))
+            )\
+            .interactive()
+        pnt_data = pd.DataFrame({'x': [float(x0),], 'y': [float(fx0),]})
+        pnt = alt.Chart(pnt_data)\
+            .mark_point(clip=True, color='white')\
+            .encode(
+                x='x:Q',
+                y='y:Q',
+            )\
+            .interactive()
+        st.session_state.chart.altair_chart(chart+pnt, use_container_width=True)
