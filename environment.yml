@@ -8,7 +8,6 @@ dependencies:
  - matplotlib
  - jupyter
  - ipympl
- - rise
  - voila
  - pip:
     - jupyter-contrib-nbextensions
