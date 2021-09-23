@@ -7,8 +7,8 @@ dependencies:
  - sympy
  - matplotlib
  - jupyter
+ - ipympl
  - voila
  - pip:
     - jupyter-contrib-nbextensions
-    - ipympl
 

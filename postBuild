@@ -1,4 +1,6 @@
 rm -rf /home/jovyan/.cache/matplotlib/
 jupyter contrib nbextension install --user
+jupyter nbextension install --py --symlink --sys-prefix --overwrite ipympl
+jupyter nbextension enable --py --sys-prefix ipympl
 jupyter nbextension enable jupyter-matplotlib/extension
 jupyter trust taylor_approx.ipynb
