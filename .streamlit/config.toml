@@ -1,0 +1,6 @@
+[theme]
+base="dark"
+primaryColor="#36d2ef"
+
+[runner]
+fixMatplotlib=true
