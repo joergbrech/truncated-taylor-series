@@ -166,15 +166,6 @@ def update_plot(x0, fx0, xs, ys, ps, visible, xmin, xmax, ymin, ymax):
         handles["vline"] = plt.vlines(x=x0, ymin=float(min(0, fx0)), ymax=float(max(0, fx0)), colors='black', ls=':', lw=2)
         handles["hline"] = plt.hlines(y=float(fx0), xmin=xmin, xmax=x0, colors='black', ls=':', lw=2)
 
-        # show legend
-        legend_handles = [handles["func"], ]
-        if visible:
-            legend_handles.append(handles["taylor"])
-        ax.legend(handles=legend_handles,
-                  loc='lower center',
-                  bbox_to_anchor=(0.5, -0.15),
-                  ncol=2)
-
     else:
         ###################
         # Update the plot #
@@ -221,6 +212,15 @@ def update_plot(x0, fx0, xs, ys, ps, visible, xmin, xmax, ymin, ymax):
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
 
+    # show legend
+    legend_handles = [handles["func"], ]
+    if visible:
+        legend_handles.append(handles["taylor"])
+    ax.legend(handles=legend_handles,
+              loc='lower center',
+              bbox_to_anchor=(0.5, -0.15),
+              ncol=2)
+
     # make all changes visible
     st.session_state.mpl_fig.canvas.draw()
 
@@ -245,9 +245,6 @@ def update_coefficients(function_string, degree_max):
 
 if __name__ == '__main__':
 
-    # maximum allowed degree of a Taylor Polynomial
-    degree_max = 10
-
     st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
     # create sidebar widgets
@@ -262,7 +259,11 @@ if __name__ == '__main__':
     # Good for in-classroom use
     qr = st.sidebar.checkbox(label="Display QR Code", value=False)
 
-    visible = st.sidebar.checkbox(label='Display Taylor Polynomial', value=True)
+    toggle_taylor_polynomial = st.sidebar.checkbox(label='Display Taylor Polynomial', value=True)
+
+    degree_max = 10
+    if toggle_taylor_polynomial:
+        degree_max = st.sidebar.number_input(label='max degree', value=10)
 
     xcol1, xcol2 = st.sidebar.columns(2)
     with xcol1:
@@ -285,7 +286,7 @@ if __name__ == '__main__':
     with tcol2:
         if qr:
             st.markdown('## <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='
-                        'https://share.streamlit.io/joergbrech/truncated-taylor-series/main)" alt='
+                        'https://share.streamlit.io/joergbrech/truncated-taylor-series/main" alt='
                         '"https://s.gwdg.de/PST5dv" width="200"/> https://s.gwdg.de/PST5dv',
                         unsafe_allow_html=True)
 
@@ -303,16 +304,18 @@ if __name__ == '__main__':
             'x0',
             min_value=xmin,
             max_value=xmax,
-            value=2.3
+            value=3.2
         )
 
     with col2:
-        degree = st.slider(
-            'degree',
-            min_value=0,
-            max_value=degree_max,
-            value=int(0)
-        )
+        degree = 0
+        if toggle_taylor_polynomial:
+            degree = st.slider(
+                'degree',
+                min_value=0,
+                max_value=degree_max,
+                value=int(0)
+            )
 
     # update the data
     coefficients = update_coefficients(func_str, degree_max)
@@ -341,7 +344,7 @@ if __name__ == '__main__':
 
     # update plot
     if 'Matplotlib' in backend:
-        update_plot(x0, fx0, xs, ys, ps, visible, xmin, xmax, ymin, ymax)
+        update_plot(x0, fx0, xs, ys, ps, toggle_taylor_polynomial, xmin, xmax, ymin, ymax)
         st.pyplot(st.session_state.mpl_fig)
     else:
         df = pd.DataFrame(data=np.array([xs, ys, ps], dtype=np.float64).transpose(),
