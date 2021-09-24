@@ -256,11 +256,9 @@ if __name__ == '__main__':
     func_str = st.sidebar.text_input(label="function",
                                      value='25 + exp(x)*sin(x**2) - 10*x')
 
-    visible = st.sidebar.checkbox(label='Show Taylor Polynomial', value=True)
+    visible = st.sidebar.checkbox(label='Display Taylor Polynomial', value=True)
 
     st.sidebar.markdown("Visualization Options")
-
-    style = st.sidebar.selectbox(label="Style", options=('Matplotlib', 'Altair'), index=0)
 
     xcol1, xcol2 = st.sidebar.columns(2)
     with xcol1:
@@ -270,7 +268,16 @@ if __name__ == '__main__':
         xmax = st.number_input(label='xmax', value=4.)
         ymax = st.number_input(label='ymax', value=50.)
 
-    res = st.sidebar.number_input(label='resolution', value=50)
+    res = st.sidebar.number_input(label='resolution', value=200)
+
+    backend = st.sidebar.selectbox(label="Backend", options=('Matplotlib', 'Altair'), index=0)
+
+    if 'Matplotlib' in backend:
+
+        def clear_figure():
+            del st.session_state['mpl_fig']
+            del st.session_state['handles']
+        xkcd = st.sidebar.checkbox("use xkcd-style", value=True, on_change=clear_figure)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -293,27 +300,33 @@ if __name__ == '__main__':
     coefficients = update_coefficients(func_str, degree_max)
     xs, ys, ps, fx0 = update_data(coefficients, degree, x0, xmin, xmax, res)
 
-    if 'Matplotlib' in style:
+    if 'Matplotlib' in backend:
+
+        if xkcd:
+            # set rc parameters to xkcd style
+            plt.xkcd()
+        else:
+            # reset rc parameters to default
+            plt.rcdefaults()
 
         # initialize the Matplotlib figure and initialize an empty dict of plot handles
         if 'mpl_fig' not in st.session_state:
-            plt.xkcd()  # <-- beautiful xkcd style
             st.session_state.mpl_fig = plt.figure(figsize=(8, 3))
             st.session_state.mpl_fig.add_axes([0., 0., 1., 1.])
 
         if 'handles' not in st.session_state:
             st.session_state.handles = {}
 
-    if 'Altair' in style and 'chart' not in st.session_state:
+    if 'Altair' in backend and 'chart' not in st.session_state:
         # initialize empty chart
         st.session_state.chart = st.empty()
 
     # update plot
-    if 'Matplotlib' in style:
+    if 'Matplotlib' in backend:
         update_plot(x0, fx0, xs, ys, ps, visible, xmin, xmax, ymin, ymax)
         st.pyplot(st.session_state.mpl_fig)
     else:
-        df = pd.DataFrame(data=np.array([xs, ys, ps], dtype=np.number).transpose(),
+        df = pd.DataFrame(data=np.array([xs, ys, ps], dtype=np.float64).transpose(),
                           columns=["x", "function", "Taylor polynomial at x0"])
         chart = alt.Chart(df) \
             .transform_fold(["function", "Taylor polynomial at x0"], as_=["legend", "y"]) \
@@ -321,7 +334,9 @@ if __name__ == '__main__':
             .encode(
                 x=alt.X('x:Q', scale=alt.Scale(domain=(xmin, xmax))),
                 y=alt.Y('y:Q', scale=alt.Scale(domain=(ymin, ymax))),
-                color=alt.Color('legend:N', scale=alt.Scale(range=["green", "blue"]))
+                color=alt.Color('legend:N',
+                                scale=alt.Scale(range=["green", "blue"]),
+                                legend=alt.Legend(orient='bottom'))
             )\
             .interactive()
         pnt_data = pd.DataFrame({'x': [float(x0),], 'y': [float(fx0),]})
@@ -332,4 +347,5 @@ if __name__ == '__main__':
                 y='y:Q',
             )\
             .interactive()
-        st.session_state.chart.altair_chart(chart+pnt, use_container_width=True)
+        altair_chart = (chart + pnt).properties(width=800, height=400)
+        st.session_state.chart.altair_chart(altair_chart, use_container_width=True)
