@@ -249,16 +249,20 @@ if __name__ == '__main__':
     degree_max = 10
 
     st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
-    st.title('Truncated Taylor series')
+
+    # create sidebar widgets
 
     st.sidebar.title("Advanced settings")
 
     func_str = st.sidebar.text_input(label="function",
                                      value='25 + exp(x)*sin(x**2) - 10*x')
 
-    visible = st.sidebar.checkbox(label='Display Taylor Polynomial', value=True)
-
     st.sidebar.markdown("Visualization Options")
+
+    # Good for in-classroom use
+    qr = st.sidebar.checkbox(label="Display QR Code", value=False)
+
+    visible = st.sidebar.checkbox(label='Display Taylor Polynomial', value=True)
 
     xcol1, xcol2 = st.sidebar.columns(2)
     with xcol1:
@@ -272,6 +276,20 @@ if __name__ == '__main__':
 
     backend = st.sidebar.selectbox(label="Backend", options=('Matplotlib', 'Altair'), index=0)
 
+    # Create main page widgets
+
+    tcol1, tcol2 = st.columns(2)
+
+    with tcol1:
+        st.title('Truncated Taylor Series')
+    with tcol2:
+        if qr:
+            st.markdown('## <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='
+                        'https://share.streamlit.io/joergbrech/truncated-taylor-series/main)" alt='
+                        '"https://s.gwdg.de/PST5dv" width="200"/> https://s.gwdg.de/PST5dv',
+                        unsafe_allow_html=True)
+
+    # prepare matplotlib plot
     if 'Matplotlib' in backend:
 
         def clear_figure():
